@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,166 +10,170 @@
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="logo.png">
 </head>
+
 <body>
 
-<div class="container">
-    <div class="header">
-        <h3><i class="fas fa-om"></i> Sadhana Tracker</h3>
-        <div id="streak-badge" style="font-size: 0.9rem; color: var(--primary); font-weight: bold;">
-            <i class="fas fa-fire"></i> <span id="streak-count">0</span> Day Streak
-        </div>
-    </div>
-
-    <div id="tab-home" class="tab-content active">
-        <div class="card lifetime-stats">
-            <div>Lifetime Jap Count</div>
-            <div class="lifetime-count" id="total-lifetime">0</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">Devotion Level: <span id="devotion-level">Beginner</span></div>
+    <div class="container">
+        <div class="header">
+            <h3><i class="fas fa-om"></i> Sadhana Tracker</h3>
+            <div id="streak-badge" style="font-size: 0.9rem; color: var(--primary); font-weight: bold;">
+                <i class="fas fa-fire"></i> <span id="streak-count">0</span> Day Streak
+            </div>
         </div>
 
-        <div class="card today-progress">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>Today's Progress</h3>
-                <span id="today-text">0 / 12960</span>
+        <div id="tab-home" class="tab-content active">
+            <div class="card lifetime-stats">
+                <div>Lifetime Jap Count</div>
+                <div class="lifetime-count" id="total-lifetime">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Devotion Level: <span id="devotion-level">Beginner</span>
+                </div>
             </div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="daily-progress-bar"></div>
-            </div>
-            
-            <div class="input-group">
-                <input type="number" id="manual-input" placeholder="Enter count (e.g. 108)">
-                <button class="btn-primary" onclick="addManualEntry()"><i class="fas fa-plus"></i> Add</button>
-            </div>
-            
-            <button class="btn-counter" onclick="openCounterModal()">
-                <i class="fas fa-fingerprint"></i> Open Digital Counter
-            </button>
-        </div>
 
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="margin:0;">Today's Entries</h3>
-                <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteAllToday()">
-                    <i class="fas fa-trash"></i> Undo All
+            <div class="card today-progress">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 id="today-title">Today's Progress</h3>
+                    <span id="today-text">0 / 12960</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="daily-progress-bar"></div>
+                </div>
+
+                <div class="input-group">
+                    <input type="number" id="manual-input" placeholder="Enter count (e.g. 108)">
+                    <button class="btn-primary" onclick="addManualEntry()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+
+                <button class="btn-counter" onclick="openCounterModal()">
+                    <i class="fas fa-fingerprint"></i> Open Digital Counter
                 </button>
             </div>
-            <ul class="history-list" id="today-entries-list">
-                <li class="history-item" style="color:#777; justify-content:center;">No entries today</li>
-            </ul>
-        </div>
-    </div>
 
-    <div id="tab-insights" class="tab-content">
-        <div class="card">
-            <h3>Last 7 Days</h3>
-            <div class="chart-container" id="weekly-chart">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0;">Today's Entries</h3>
+                    <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteAllToday()">
+                        <i class="fas fa-trash"></i> Undo All
+                    </button>
                 </div>
-        </div>
-        
-        <div class="card">
-            <h3 style="margin-bottom: 10px;">Monthly Overview</h3>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Total this month:</span>
-                <strong id="month-total">0</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span>Daily Average:</span>
-                <strong id="daily-avg">0</strong>
+                <ul class="history-list" id="today-entries-list">
+                    <li class="history-item" style="color:#777; justify-content:center;">No entries today</li>
+                </ul>
             </div>
         </div>
-    </div>
 
-    <div id="tab-achievements" class="tab-content">
-        <div class="card">
-            <h3 style="margin-bottom: 10px;">Milestones & Badges</h3>
-            <div class="achievement-grid" id="achievement-list">
+        <div id="tab-insights" class="tab-content">
+            <div class="card">
+                <h3>Last 7 Days</h3>
+                <div class="chart-container" id="weekly-chart">
                 </div>
-        </div>
-    </div>
-
-    <div id="tab-settings" class="tab-content">
-        <div class="card">
-            <h3>Goal Settings</h3>
-            <label>Daily Jap Goal (Base)</label>
-            <div class="input-group">
-                <input type="number" id="goal-input" value="12960">
-                <button class="btn-primary" onclick="saveGoal()">Save</button>
             </div>
-            
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                <div>
-                    <h4 style="margin: 0;">Catch-up Mode</h4>
-                    <p style="margin: 0; font-size: 0.8rem; color: #777;">Add pending jap to today's goal</p>
+
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Monthly Overview</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Total this month:</span>
+                    <strong id="month-total">0</strong>
                 </div>
-                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 26px;">
-                    <input type="checkbox" id="catchup-toggle" onchange="toggleCatchUp()" style="opacity: 0; width: 0; height: 0;">
-                    <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                    <style>.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; } input:checked + .slider { background-color: var(--primary); } input:checked + .slider:before { transform: translateX(24px); }</style>
-                </label>
-            </div>
-
-            <div id="catchup-options" style="display: none;">
-                <label style="font-size: 0.9rem;">Include penalty for last:</label>
-                <select id="catchup-days" onchange="saveCatchUpSettings()" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd;">
-                    <option value="1">1 Day (Yesterday)</option>
-                    <option value="2">2 Days</option>
-                    <option value="3">3 Days</option>
-                    <option value="4">4 Days</option>
-                </select>
-            </div>
-            
-            <div id="dynamic-goal-display" style="margin-top: 15px; font-size: 0.9rem; color: var(--primary-dark); display: none;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Daily Average:</span>
+                    <strong id="daily-avg">0</strong>
                 </div>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 10px;">Data Management</h3>
-            <p style="font-size: 0.85rem; color: #666;">Data is stored locally on this device.</p>
-            <div class="file-controls">
-                <button class="btn-secondary" onclick="exportData()" style="flex:1"><i class="fas fa-download"></i> Backup Data</button>
-                <button class="btn-secondary" onclick="$('#file-upload').click()" style="flex:1"><i class="fas fa-upload"></i> Restore Data</button>
-                <input type="file" id="file-upload" style="display: none;" onchange="importData(this)">
             </div>
-            <br>
-            <button class="btn-danger" onclick="resetAllData()" style="width:100%">Reset All Data</button>
+        </div>
+
+        <div id="tab-achievements" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Milestones & Badges</h3>
+                <div class="achievement-grid" id="achievement-list">
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Goal Settings</h3>
+                <label>Daily Jap Goal</label>
+                <div class="input-group">
+                    <input type="number" id="goal-input" value="12960">
+                    <button class="btn-primary-dark" onclick="saveGoal()">Save</button>
+                </div>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <div>
+                        <h4 style="margin: 0;">Catch-up Mode</h4>
+                        <p style="margin: 0; font-size: 0.8rem; color: #777;">Add pending jap to today's goal</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="catchup-toggle" onchange="toggleCatchUp()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="catchup-options" style="display: none;">
+                    <label style="font-size: 0.9rem;">Include penalty for last:</label>
+                    <select id="catchup-days" onchange="saveCatchUpSettings()"
+                        style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd;">
+                        <option value="1">1 Day (Yesterday)</option>
+                        <option value="2">2 Days</option>
+                        <option value="3">3 Days</option>
+                        <option value="4">4 Days</option>
+                    </select>
+                </div>
+
+                <div id="dynamic-goal-display" style="margin-top: 15px; font-size: 0.9rem; color: var(--primary-dark); display: none;"></div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Data Management</h3>
+                <p style="font-size: 0.85rem; color: #666;">Data is stored locally on this device.</p>
+                <div class="file-controls">
+                    <button class="btn-secondary" onclick="exportData()" style="flex:1"><i class="fas fa-download"></i>
+                        Backup Data</button>
+                    <button class="btn-secondary" onclick="$('#file-upload').click()" style="flex:1"><i
+                            class="fas fa-upload"></i> Restore Data</button>
+                    <input type="file" id="file-upload" style="display: none;" onchange="importData(this)">
+                </div>
+                <br>
+                <button class="btn-danger" onclick="resetAllData()" style="width:100%">Reset All Data</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('home')">
+            <i class="fas fa-home"></i> Home
+        </button>
+        <button class="nav-item" onclick="switchTab('insights')">
+            <i class="fas fa-chart-bar"></i> Insights
+        </button>
+        <button class="nav-item" onclick="switchTab('achievements')">
+            <i class="fas fa-trophy"></i> Awards
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')">
+            <i class="fas fa-cog"></i> Settings
+        </button>
+    </div>
+
+    <div id="counter-modal" class="modal">
+        <div style="padding: 20px; width: 100%; display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn-secondary" onclick="closeCounterModal(false)">Cancel</button>
+            <h3>Digital Counter</h3>
+            <button class="btn-primary-dark" onclick="closeCounterModal(true)">Save</button>
+        </div>
+
+        <div class="counter-display" id="modal-counter-val">0</div>
+
+        <div class="tap-area" onclick="incrementModalCounter()">
+            TAP HERE TO CHANT
+        </div>
+        <div style="padding: 20px; color: #777; font-size: 0.9rem;">
+            Screen stays on while tapping
         </div>
     </div>
-
-</div>
-
-<div class="nav-bar">
-    <button class="nav-item active" onclick="switchTab('home')">
-        <i class="fas fa-home"></i> Home
-    </button>
-    <button class="nav-item" onclick="switchTab('insights')">
-        <i class="fas fa-chart-bar"></i> Insights
-    </button>
-    <button class="nav-item" onclick="switchTab('achievements')">
-        <i class="fas fa-trophy"></i> Awards
-    </button>
-    <button class="nav-item" onclick="switchTab('settings')">
-        <i class="fas fa-cog"></i> Settings
-    </button>
-</div>
-
-<div id="counter-modal" class="modal">
-    <div style="padding: 20px; width: 100%; display:flex; justify-content:space-between; align-items:center;">
-        <button class="btn-secondary" onclick="closeCounterModal(false)">Cancel</button>
-        <h3>Digital Counter</h3>
-        <button class="btn-primary" onclick="closeCounterModal(true)">Save</button>
-    </div>
-    
-    <div class="counter-display" id="modal-counter-val">0</div>
-    
-    <div class="tap-area" onclick="incrementModalCounter()">
-        TAP HERE TO CHANT
-    </div>
-    <div style="padding: 20px; color: #777; font-size: 0.9rem;">
-        Screen stays on while tapping
-    </div>
-</div>
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>
