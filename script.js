@@ -314,7 +314,30 @@ function renderUI() {
     $('#catchup-toggle').prop('checked', appData.settings.catchUpMode || false);
     $('#catchup-days').val(appData.settings.catchUpDays || 1);
     $('#catchup-options').toggle(appData.settings.catchUpMode || false);
+
+    if (appData.settings.catchUpMode) {
+        // We use the helper function we made earlier
+        const dynGoal = getDynamicGoal();
+        const extra = dynGoal - appData.goal;
+
+        if (extra > 0) {
+            $('#dynamic-goal-display').show().html(`<i class="fas fa-info-circle"></i> Today's goal increased by <strong>${extra.toLocaleString()}</strong> due to catch-up.`);
+        } else {
+            $('#dynamic-goal-display').hide();
+        }
+    } else {
+        $('#dynamic-goal-display').hide();
+    }
 }
+
+// Set initial title based on saved state
+$('#catchup-toggle').prop('checked', function () {
+    $("#today-title").text("Catch-Up Mode");
+});
+// Update title based on catch-up mode
+$('#catchup-toggle').change(function () {
+    $(this).prop('checked') ? $("#today-title").text("Catch-Up Mode") : $("#today-title").text("Today's Progress");
+});
 
 // --- ANALYTICS HELPER ---
 function calculateStreak() {
@@ -362,11 +385,13 @@ function calculateStreak() {
 }
 
 function calculateLevel(total) {
-    if (total < 10000) return "Sadhaka (Beginner)";
-    if (total < 100000) return "Devotee";
-    if (total < 1000000) return "Dedicated Soul";
-    if (total < 10000000) return "Mantra Siddha";
-    return "Divine Connection";
+    if (total >= 800000000) return "Naam-Nishtha Sadhak";
+    if (total >= 500000000) return "Devotee";
+    if (total >= 100000000) return "Dedicated Soul";
+    if (total >= 10000000) return "Practitioner";
+    if (total >= 1000000) return "Sadhaka (Intermediate)";
+    if (total >= 100000) return "Sadhaka (Beginner)";
+    return "Novice";
 }
 
 function renderChart() {
