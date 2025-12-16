@@ -1,4 +1,3 @@
-
 // --- STATE MANAGEMENT ---
 const DEFAULT_GOAL = 12960;
 let appData = {
@@ -58,6 +57,55 @@ function getDynamicGoal() {
     return baseGoal + deficit;
 }
 
+// Distribute today's count to past deficits for visualization
+function getVisualHistory() {
+    // 1. Deep clone history so we don't touch real data
+    let visualHistory = JSON.parse(JSON.stringify(appData.history));
+
+    // If normal mode, return raw data immediately (Standard behavior)
+    if (!appData.settings.catchUpMode) return visualHistory;
+
+    let availableJap = getTodayTotal();
+    const daysToCheck = appData.settings.catchUpDays || 1;
+    const baseGoal = appData.goal;
+
+    // 2. Loop: Yesterday -> Oldest (Prioritize immediate streak)
+    for (let i = 1; i <= daysToCheck; i++) {
+        if (availableJap <= 0) break; // Stop if no jap left
+
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dStr = d.toISOString().split('T')[0];
+
+        const dayEntries = visualHistory[dStr] || [];
+        const dayTotal = dayEntries.reduce((a, b) => a + b, 0);
+
+        // If past day has a deficit
+        if (dayTotal < baseGoal) {
+            const deficit = baseGoal - dayTotal;
+
+            // Use what we have to fill it
+            const contribution = Math.min(availableJap, deficit);
+
+            if (contribution > 0) {
+                // Add "Ghost" entry to that past day
+                if (!visualHistory[dStr]) visualHistory[dStr] = [];
+                visualHistory[dStr].push(contribution);
+
+                // Deduct from today's available budget
+                availableJap -= contribution;
+            }
+        }
+    }
+
+    // 3. CRITICAL FIX: Overwrite 'Today' in the visual object 
+    // to only show what is LEFT after paying debts.
+    // We wrap it in an array [availableJap] because the system expects an array of entries.
+    visualHistory[todayStr] = [availableJap];
+
+    return visualHistory;
+}
+
 function toggleCatchUp() {
     appData.settings.catchUpMode = $('#catchup-toggle').is(':checked');
     $('#catchup-options').toggle(appData.settings.catchUpMode);
@@ -97,15 +145,23 @@ function addManualEntry() {
         saveData();
     }
 }
-
-function deleteLastEntry() {
-    if (appData.history[todayStr] && appData.history[todayStr].length > 0) {
-        if (confirm("Remove the last entry for today?")) {
-            appData.history[todayStr].pop();
+function deleteAllToday() {
+    const count = appData.history[todayStr] ? appData.history[todayStr].length : 0;
+    if (count > 0) {
+        if (confirm("Are you sure you want to delete ALL entries for today?")) {
+            appData.history[todayStr] = [];
             saveData();
         }
     } else {
-        alert("No entries to delete for today.");
+        alert("No entries to clear.");
+    }
+}
+
+function deleteSpecificEntry(originalIndex) {
+    if (confirm("Remove this entry?")) {
+        // Remove the item at the specific index
+        appData.history[todayStr].splice(originalIndex, 1);
+        saveData();
     }
 }
 
@@ -151,35 +207,72 @@ function closeCounterModal(save) {
 
 // --- UI RENDERING ---
 function renderUI() {
-    const todayTotal = getTodayTotal();
+    const rawTodayTotal = getTodayTotal();
     const lifetimeTotal = getLifetimeTotal();
+    const baseGoal = appData.goal;
 
-    // NEW LOGIC
-    const goal = getDynamicGoal();
+    // --- 1. CATCH UP & PROGRESS BAR LOGIC ---
+    let displayTotal = rawTodayTotal;
+    let displayGoal = baseGoal;
+    let barColor = '#ff7f50'; // Default Orange
+    let progressPct = 0;
+    let statusText = "";
 
-    // Update Settings UI State
-    $('#catchup-toggle').prop('checked', appData.settings.catchUpMode || false);
-    $('#catchup-days').val(appData.settings.catchUpDays || 1);
     if (appData.settings.catchUpMode) {
-        $('#catchup-options').show();
-        if (goal > appData.goal) {
-            $('#dynamic-goal-display').show().html(`<i class="fas fa-info-circle"></i> Today's goal increased by <strong>${(goal - appData.goal).toLocaleString()}</strong> due to catch-up.`);
+        // Calculate Total Deficit from past days
+        let totalDeficit = 0;
+        const checkDays = appData.settings.catchUpDays || 1;
+        for (let i = 1; i <= checkDays; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dStr = d.toISOString().split('T')[0];
+            const hist = appData.history[dStr] || [];
+            const daySum = hist.reduce((a, b) => a + b, 0);
+            if (daySum < baseGoal) totalDeficit += (baseGoal - daySum);
+        }
+
+        if (totalDeficit > 0) {
+            // PHASE 1: PENALTY MODE
+            if (rawTodayTotal < totalDeficit) {
+                displayTotal = rawTodayTotal;
+                displayGoal = totalDeficit;
+                barColor = '#ff5252'; // RED
+                progressPct = (displayTotal / displayGoal) * 100;
+                statusText = `<span style="color:#ff5252"><i class="fas fa-exclamation-triangle"></i> ${displayTotal}/${displayGoal}</span>`;
+            }
+            // PHASE 2: NORMAL MODE (After penalty paid)
+            else {
+                const effectiveToday = rawTodayTotal - totalDeficit;
+                displayTotal = effectiveToday;
+                displayGoal = baseGoal;
+                // Green if done, Orange if working
+                barColor = (effectiveToday >= baseGoal) ? '#4caf50' : '#ff7f50';
+                progressPct = (effectiveToday / baseGoal) * 100;
+                statusText = `${displayTotal.toLocaleString()} / ${displayGoal.toLocaleString()}`;
+            }
         } else {
-            $('#dynamic-goal-display').hide();
+            // No deficit, normal mode
+            progressPct = (rawTodayTotal / baseGoal) * 100;
+            barColor = (rawTodayTotal >= baseGoal) ? '#4caf50' : '#ff7f50';
+            statusText = `${rawTodayTotal.toLocaleString()} / ${baseGoal.toLocaleString()}`;
         }
     } else {
-        $('#catchup-options').hide();
-        $('#dynamic-goal-display').hide();
+        // Standard Mode (Catch up off)
+        progressPct = (rawTodayTotal / baseGoal) * 100;
+        barColor = (rawTodayTotal >= baseGoal) ? '#4caf50' : '#ff7f50';
+        statusText = `${rawTodayTotal.toLocaleString()} / ${baseGoal.toLocaleString()}`;
     }
 
-    // 1. Home Stats
-    $('#total-lifetime').text(lifetimeTotal.toLocaleString());
-    $('#today-text').text(`${todayTotal.toLocaleString()} / ${goal.toLocaleString()}`);
+    // Cap width at 100%
+    if (progressPct > 100) progressPct = 100;
 
-    const pct = Math.min((todayTotal / goal) * 100, 100);
-    $('#daily-progress-bar').css('width', pct + '%');
-    if (pct >= 100) $('#daily-progress-bar').css('background', '#4caf50'); // Green
-    else $('#daily-progress-bar').css('background', '#ff7f50'); // Orange
+    // Apply to DOM
+    $('#total-lifetime').text(lifetimeTotal.toLocaleString());
+    $('#today-text').html(statusText);
+    $('#daily-progress-bar').css({
+        'width': progressPct + '%',
+        'background': barColor
+    });
 
     // 2. History List
     const list = $('#today-entries-list');
@@ -190,24 +283,37 @@ function renderUI() {
     } else {
         // Show in reverse order (newest top)
         entries.slice().reverse().forEach((val, idx) => {
-            list.append(`<li class="history-item">
-                    <span>Entry #${entries.length - idx}</span>
+            // Calculate the original array index (since we are looping in reverse)
+            const originalIndex = entries.length - 1 - idx;
+
+            list.append(`<li class="history-item" style="align-items: center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="btn-danger" 
+                                style="padding: 0; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;" 
+                                onclick="deleteSpecificEntry(${originalIndex})">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span style="font-size: 0.9rem;">Entry #${entries.length - idx}</span>
+                    </div>
                     <strong>+${val}</strong>
                 </li>`);
         });
     }
 
-    // 3. Streak & Devotion
+    // --- 3. Streak & Devotion ---
     const streak = calculateStreak();
     $('#streak-count').text(streak);
     $('#devotion-level').text(calculateLevel(lifetimeTotal));
 
-    // 4. Insights Chart
-    renderChart();
+    // --- 4. Charts & Settings ---
+    renderChart(); // Will use new logic
     renderStats();
-
-    // 5. Achievements
     renderAchievements(lifetimeTotal, streak);
+
+    // Update Settings toggles
+    $('#catchup-toggle').prop('checked', appData.settings.catchUpMode || false);
+    $('#catchup-days').val(appData.settings.catchUpDays || 1);
+    $('#catchup-options').toggle(appData.settings.catchUpMode || false);
 }
 
 // --- ANALYTICS HELPER ---
@@ -269,6 +375,9 @@ function renderChart() {
 
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+    // GET THE VISUAL DATA
+    const visualData = getVisualHistory();
+
     // Get last 7 days
     for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -276,14 +385,18 @@ function renderChart() {
         const dStr = d.toISOString().split('T')[0];
         const dayName = days[d.getDay()];
 
-        const entries = appData.history[dStr] || [];
+        // Use visual data instead of raw data
+        const entries = visualData[dStr] || [];
         const sum = entries.reduce((a, b) => a + b, 0);
 
-        // Normalize for visual (max height 100px based on Goal)
+        // Normalize for visual
         let heightPct = (sum / appData.goal) * 100;
-        if (heightPct > 100) heightPct = 100; // Cap visual at 100%
-        if (sum > 0 && heightPct < 5) heightPct = 5; // Min visibility
+        if (heightPct > 100) heightPct = 100;
+        if (sum > 0 && heightPct < 5) heightPct = 5;
 
+        // Logic: If this is NOT today, and the sum is exactly the goal, 
+        // and we are in catchup mode, it might be filled by backlogging.
+        // But for simplicity, we just use standard colors.
         const color = sum >= appData.goal ? '#4caf50' : '#ff7f50';
 
         container.append(`
